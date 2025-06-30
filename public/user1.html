@@ -1,1 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Don't Miss - User 1 💬</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ffeaea;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    #chat {
+      border: 1px solid #ccc;
+      background: #fff;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    input {
+      padding: 10px;
+      width: 70%;
+    }
+    button {
+      padding: 10px;
+      width: 25%;
+    }
+  </style>
+</head>
+<body>
+  <h2>🧑‍💻 User 1 Chat</h2>
+  <div id="chat"></div>
+  <input id="msg" placeholder="Type a message..." autocomplete="off" />
+  <button onclick="send()">Send</button>
 
+  <script>
+    const socket = io();
+    const chat = document.getElementById('chat');
+    const msgInput = document.getElementById('msg');
+
+    fetch('/messages')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(msg => appendMessage(msg.sender, msg.message));
+      });
+
+    function appendMessage(sender, message) {
+      const div = document.createElement('div');
+      div.textContent = `${sender}: ${message}`;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function send() {
+      const message = msgInput.value.trim();
+      if (!message) return;
+      socket.emit('chat message', { sender: 'User1', message });
+      msgInput.value = '';
+    }
+
+    socket.on('chat message', data => {
+      appendMessage(data.sender, data.message);
+    });
+  </script>
+</body>
+</html>
