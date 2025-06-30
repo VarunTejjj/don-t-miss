@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Don't Miss - User 2 💬</title>
+  <title>Don't Miss - Akshu 💬</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     body {
@@ -11,9 +11,7 @@
       margin: 0;
       padding: 20px;
     }
-    h2 {
-      margin-top: 0;
-    }
+    h2 { margin-top: 0; }
     #chat {
       border: 1px solid #ccc;
       background: #fff;
@@ -30,14 +28,28 @@
       padding: 10px;
       width: 25%;
     }
+    .message-container {
+      background: #f0f0f0;
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin: 5px 0;
+    }
+    .message-text {
+      font-size: 14px;
+      margin: 0;
+    }
+    .message-time {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
-  <h2>👩‍💻 User 2 Chat</h2>
+  <h2>Akshu Chat</h2>
   <div id="chat"></div>
   <input id="msg" placeholder="Type a message..." autocomplete="off" />
   <button onclick="send()">Send</button>
-
   <script>
     const socket = io();
     const chat = document.getElementById('chat');
@@ -46,29 +58,27 @@
     fetch('/messages')
       .then(res => res.json())
       .then(data => {
-        data.forEach(msg => appendMessage(msg.sender, msg.message));
+        data.forEach(msg => appendMessage(msg.sender, msg.message, msg.timestamp));
       });
 
     function appendMessage(sender, message, timestamp) {
-  const container = document.createElement('div');
-  const msgLine = document.createElement('div');
-  const timeLine = document.createElement('div');
+      const container = document.createElement('div');
+      container.className = 'message-container';
 
-  msgLine.textContent = `${sender}: ${message}`;
-  msgLine.style.fontWeight = "bold";
+      const msgLine = document.createElement('p');
+      msgLine.className = 'message-text';
+      msgLine.textContent = `${sender}: ${message}`;
 
-  const time = timestamp ? new Date(timestamp).toLocaleString() : new Date().toLocaleString();
-  timeLine.textContent = time;
-  timeLine.style.fontSize = "12px";
-  timeLine.style.color = "#666";
-  timeLine.style.marginBottom = "10px";
+      const timeLine = document.createElement('div');
+      const time = timestamp ? new Date(timestamp).toLocaleString() : new Date().toLocaleString();
+      timeLine.textContent = time;
+      timeLine.className = 'message-time';
 
-  container.appendChild(msgLine);
-  container.appendChild(timeLine);
-
-  document.getElementById('chat').appendChild(container);
-  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-}
+      container.appendChild(msgLine);
+      container.appendChild(timeLine);
+      chat.appendChild(container);
+      chat.scrollTop = chat.scrollHeight;
+    }
 
     function send() {
       const message = msgInput.value.trim();
@@ -78,7 +88,7 @@
     }
 
     socket.on('chat message', data => {
-      appendMessage(data.sender, data.message);
+      appendMessage(data.sender, data.message, data.timestamp);
     });
   </script>
 </body>
