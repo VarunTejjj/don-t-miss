@@ -50,12 +50,25 @@
       });
 
     function appendMessage(sender, message, timestamp) {
-  const div = document.createElement('div');
+  const container = document.createElement('div');
+  const msgLine = document.createElement('div');
+  const timeLine = document.createElement('div');
+
+  msgLine.textContent = `${sender}: ${message}`;
+  msgLine.style.fontWeight = "bold";
+
   const time = timestamp ? new Date(timestamp).toLocaleString() : new Date().toLocaleString();
-  div.textContent = `${sender} (${time}): ${message}`;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
+  timeLine.textContent = time;
+  timeLine.style.fontSize = "12px";
+  timeLine.style.color = "#666";
+  timeLine.style.marginBottom = "10px";
+
+  container.appendChild(msgLine);
+  container.appendChild(timeLine);
+
+  document.getElementById('chat').appendChild(container);
+  document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+    }
 
     function send() {
       const message = msgInput.value.trim();
