@@ -37,8 +37,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/messages', async (req, res) => {
   try {
     const messages = await Message.find().sort({ timestamp: 1 });
+    console.log("Fetched messages:", messages); // log messages
     res.json(messages);
   } catch (err) {
+    console.error("Fetch error:", err); // log error
     res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
