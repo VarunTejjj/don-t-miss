@@ -9,10 +9,10 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Fix Mongoose DeprecationWarning
+// Fix Mongoose deprecation warning
 mongoose.set('strictQuery', true);
 
-// MongoDB connection
+// Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -22,7 +22,7 @@ mongoose.connect(process.env.MONGO_URI, {
   console.error("❌ MongoDB connection error:", err);
 });
 
-// Message Schema
+// Define Message schema
 const MessageSchema = new mongoose.Schema({
   sender: String,
   message: String,
@@ -30,10 +30,10 @@ const MessageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', MessageSchema);
 
-// Serve static HTML files
+// Serve static files from public/
 app.use(express.static(path.join(__dirname, 'public')));
 
-// REST API: Get chat history
+// Fetch previous messages
 app.get('/messages', async (req, res) => {
   try {
     const messages = await Message.find().sort({ timestamp: 1 });
@@ -43,7 +43,7 @@ app.get('/messages', async (req, res) => {
   }
 });
 
-// WebSocket logic
+// Socket.IO real-time chat
 io.on('connection', (socket) => {
   console.log('🔌 A user connected.');
 
@@ -51,7 +51,7 @@ io.on('connection', (socket) => {
     try {
       const newMsg = new Message(data);
       await newMsg.save();
-      io.emit('chat message', data); // Broadcast to all users
+      io.emit('chat message', data); // broadcast to everyone
     } catch (err) {
       console.error('❌ Error saving message:', err);
     }
@@ -62,8 +62,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start server
+// Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
