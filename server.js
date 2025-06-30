@@ -9,9 +9,20 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+// Fix Mongoose DeprecationWarning
+mongoose.set('strictQuery', true);
 
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log("✅ Connected to MongoDB");
+}).catch((err) => {
+  console.error("❌ MongoDB connection error:", err);
+});
+
+// Message Schema
 const MessageSchema = new mongoose.Schema({
   sender: String,
   message: String,
@@ -19,32 +30,40 @@ const MessageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', MessageSchema);
 
-// Serve static files
+// Serve static HTML files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// REST API to get previous messages
+// REST API: Get chat history
 app.get('/messages', async (req, res) => {
-  const messages = await Message.find().sort({ timestamp: 1 });
-  res.json(messages);
+  try {
+    const messages = await Message.find().sort({ timestamp: 1 });
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
 });
 
-// Socket.IO chat logic
+// WebSocket logic
 io.on('connection', (socket) => {
-  console.log('A user connected.');
+  console.log('🔌 A user connected.');
 
   socket.on('chat message', async (data) => {
-    const newMsg = new Message(data);
-    await newMsg.save();
-
-    io.emit('chat message', data);
+    try {
+      const newMsg = new Message(data);
+      await newMsg.save();
+      io.emit('chat message', data); // Broadcast to all users
+    } catch (err) {
+      console.error('❌ Error saving message:', err);
+    }
   });
 
   socket.on('disconnect', () => {
-    console.log('A user disconnected.');
+    console.log('❎ A user disconnected.');
   });
 });
 
+// Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
