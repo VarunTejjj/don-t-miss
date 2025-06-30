@@ -9,7 +9,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Fix Mongoose deprecation warning
+// Mongoose fix
 mongoose.set('strictQuery', true);
 
 // Connect to MongoDB
@@ -17,12 +17,12 @@ mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {
-  console.log("✅ Connected to MongoDB");
-}).catch((err) => {
-  console.error("❌ MongoDB connection error:", err);
+  console.log("✅ MongoDB connected");
+}).catch(err => {
+  console.error("❌ MongoDB error:", err);
 });
 
-// Define Message schema
+// Schema
 const MessageSchema = new mongoose.Schema({
   sender: String,
   message: String,
@@ -30,42 +30,44 @@ const MessageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', MessageSchema);
 
-// Serve static files from public/
+// Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fetch previous messages
+// Fetch all previous messages
 app.get('/messages', async (req, res) => {
   try {
     const messages = await Message.find().sort({ timestamp: 1 });
-    console.log("Fetched messages:", messages); // log messages
+    console.log("📥 Sending messages to client:", messages.length);
     res.json(messages);
   } catch (err) {
-    console.error("Fetch error:", err); // log error
+    console.error("❌ Error fetching messages:", err);
     res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
 
-// Socket.IO real-time chat
+// Handle incoming messages
 io.on('connection', (socket) => {
-  console.log('🔌 A user connected.');
+  console.log('🔌 User connected');
 
   socket.on('chat message', async (data) => {
+    console.log("📤 Received message:", data);
     try {
       const newMsg = new Message(data);
       await newMsg.save();
-      io.emit('chat message', data); // broadcast to everyone
+      console.log("✅ Message saved to DB");
+      io.emit('chat message', data);
     } catch (err) {
-      console.error('❌ Error saving message:', err);
+      console.error("❌ Failed to save message:", err);
     }
   });
 
   socket.on('disconnect', () => {
-    console.log('❎ A user disconnected.');
+    console.log('❎ User disconnected');
   });
 });
 
-// Start the server
+// Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
