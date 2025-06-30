@@ -49,12 +49,13 @@
         data.forEach(msg => appendMessage(msg.sender, msg.message));
       });
 
-    function appendMessage(sender, message) {
-      const div = document.createElement('div');
-      div.textContent = `${sender}: ${message}`;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
+    function appendMessage(sender, message, timestamp) {
+  const div = document.createElement('div');
+  const time = timestamp ? new Date(timestamp).toLocaleString() : new Date().toLocaleString();
+  div.textContent = `${sender} (${time}): ${message}`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
 
     function send() {
       const message = msgInput.value.trim();
