@@ -16,7 +16,7 @@ mongoose.set('strictQuery', true);
 const mongoUri = process.env.MONGODB_URI;
 
 if (!mongoUri) {
-  console.error("❌ Missing MONGO_URI in .env");
+  console.error("❌ Missing MONGODB_URI in .env");
   process.exit(1);
 }
 
