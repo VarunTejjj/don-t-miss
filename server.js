@@ -12,15 +12,39 @@ const io = socketIo(server);
 // Mongoose fix
 mongoose.set('strictQuery', true);
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log("✅ MongoDB connected");
-}).catch(err => {
-  console.error("❌ MongoDB error:", err);
-});
+// MongoDB connection with retry logic
+const mongoUri = process.env.MONGODB_URI;
+
+if (!mongoUri) {
+  console.error("❌ Missing MONGO_URI in .env");
+  process.exit(1);
+}
+
+async function connectWithRetry(retries = 5) {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      await mongoose.connect(mongoUri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+        family: 4
+      });
+      console.log(`✅ MongoDB connected (attempt ${i})`);
+      break;
+    } catch (err) {
+      console.error(`❌ Attempt ${i} failed:`, err.message);
+      if (i === retries) process.exit(1);
+      await new Promise(res => setTimeout(res, 5000));
+    }
+  }
+}
+
+connectWithRetry();
+
+mongoose.connection.on("error", err => console.error("❌ MongoDB error:", err));
+mongoose.connection.on("disconnected", () => console.warn("⚠️ MongoDB disconnected"));
+mongoose.connection.on("reconnected", () => console.log("🔁 MongoDB reconnected"));
 
 // Schema
 const MessageSchema = new mongoose.Schema({
