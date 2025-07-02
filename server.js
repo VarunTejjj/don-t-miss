@@ -9,10 +9,10 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Mongoose fix
+// Fix for strict query warnings
 mongoose.set('strictQuery', true);
 
-// MongoDB connection with retry logic
+// Connect to MongoDB with retry logic
 const mongoUri = process.env.MONGODB_URI;
 
 if (!mongoUri) {
@@ -28,7 +28,7 @@ async function connectWithRetry(retries = 5) {
         useUnifiedTopology: true,
         serverSelectionTimeoutMS: 30000,
         socketTimeoutMS: 45000,
-        family: 4
+        family: 4 // Prefer IPv4
       });
       console.log(`✅ MongoDB connected (attempt ${i})`);
       break;
@@ -42,11 +42,12 @@ async function connectWithRetry(retries = 5) {
 
 connectWithRetry();
 
+// MongoDB connection events
 mongoose.connection.on("error", err => console.error("❌ MongoDB error:", err));
 mongoose.connection.on("disconnected", () => console.warn("⚠️ MongoDB disconnected"));
 mongoose.connection.on("reconnected", () => console.log("🔁 MongoDB reconnected"));
 
-// Schema
+// Message Schema and Model
 const MessageSchema = new mongoose.Schema({
   sender: String,
   message: String,
@@ -54,10 +55,10 @@ const MessageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', MessageSchema);
 
-// Static files
+// Serve static files from public/
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fetch all previous messages
+// API to fetch messages
 app.get('/messages', async (req, res) => {
   try {
     const messages = await Message.find().sort({ timestamp: 1 });
@@ -69,7 +70,7 @@ app.get('/messages', async (req, res) => {
   }
 });
 
-// Handle incoming messages
+// Socket.io real-time chat
 io.on('connection', (socket) => {
   console.log('🔌 User connected');
 
